@@ -1,17 +1,17 @@
 .PHONY: help
-help: ## ヘルプを表示
+help: ## Show help
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}'
 
 .PHONY: lint
-lint: ## 静的解析を実行
+lint: ## Run linter
 	uv run ruff check src tests
 	uv run ruff format --check src tests
 
 .PHONY: fix
-fix: ## 自動修正を実行
+fix: ## Auto-fix lint issues
 	uv run ruff check --fix src tests
 	uv run ruff format src tests
 
 .PHONY: test
-test: ## 自動テストを実行
+test: ## Run tests
 	uv run pytest tests -v

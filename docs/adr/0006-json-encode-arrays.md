@@ -8,29 +8,29 @@ Accepted
 
 ## Context
 
-frontmatter の配列（`tags: [ai, python]`）を DuckDB でどう扱うか検討した。
+We needed to decide how to handle frontmatter arrays (e.g., `tags: [ai, python]`) in DuckDB.
 
-ADR-0005 で全値を文字列として扱う方針を決定したため、配列も何らかの文字列表現が必要だった。
+Since ADR-0005 established treating all values as strings, arrays also needed some string representation.
 
 ## Decision
 
-配列は JSON 文字列としてエンコードし、SQL 側で `from_json()` と `UNNEST` を使用して展開する。
+Arrays are JSON-encoded as strings, and expanded on the SQL side using `from_json()` and `UNNEST`.
 
 ```python
-# Python 側
+# Python side
 if isinstance(value, list):
     return json.dumps(value, ensure_ascii=False)
 ```
 
 ```sql
--- SQL 側での展開
+-- SQL side expansion
 SELECT path, tag
 FROM files, UNNEST(from_json(tags, '[""]')) AS t(tag)
 ```
 
 ## Consequences
 
-- ADR-0005 の全値文字列方針と一貫性がある
-- 全カラムが文字列型で統一される
-- DuckDB の `from_json()` 関数で動的に配列に変換可能
-- `from_json()` の第二引数にはスキーマヒント（`'[""]'`）が必要
+- Consistent with ADR-0005's all-strings approach
+- All columns unified as string type
+- Arrays can be dynamically converted using DuckDB's `from_json()` function
+- `from_json()` requires a schema hint as the second argument (`'[""]'`)

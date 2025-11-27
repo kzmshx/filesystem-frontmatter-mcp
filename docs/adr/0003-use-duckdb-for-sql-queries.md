@@ -8,22 +8,22 @@ Accepted
 
 ## Context
 
-frontmatter データに対してフィルタリング・集計を行う方法を検討した。
+We needed to decide how to filter and aggregate frontmatter data.
 
-候補:
-- pandas: SQL よりも学習コストが高い、MCP クライアント側での利用が困難
-- SQLite: 配列操作が弱い、JSON 関数のサポートが限定的
-- jq 風の DSL: 実装コストが高い、学習コストも発生
-- DuckDB: SQL の表現力、配列操作、インメモリ実行
+Candidates:
+- pandas: Higher learning curve than SQL, difficult to use from MCP clients
+- SQLite: Weak array operations, limited JSON function support
+- jq-style DSL: High implementation cost, also requires learning
+- DuckDB: Expressive SQL, array operations, in-memory execution
 
 ## Decision
 
-DuckDB をインメモリ SQL エンジンとして採用した。
+Adopted DuckDB as the in-memory SQL engine.
 
 ## Consequences
 
-- WHERE、GROUP BY、JOIN など複雑なクエリが可能
-- `UNNEST`、`from_json()` による配列展開が容易
-- インメモリ実行で高速
-- サーバープロセス不要、Python ライブラリとして組み込み可能
-- DuckDB の SQL 方言に依存する
+- Complex queries possible with WHERE, GROUP BY, JOIN, etc.
+- Easy array expansion with `UNNEST` and `from_json()`
+- Fast in-memory execution
+- No server process required, embeddable as a Python library
+- Depends on DuckDB's SQL dialect

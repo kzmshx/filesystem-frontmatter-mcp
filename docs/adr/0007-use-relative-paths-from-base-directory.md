@@ -8,15 +8,15 @@ Accepted
 
 ## Context
 
-クエリ結果のファイルパスをどう表現するか検討した。
+We needed to decide how to represent file paths in query results.
 
-候補:
-- 絶対パス: `/Users/kzmshx/Documents/Obsidian/atoms/daily/2025-11-01.md`
-- 相対パス: `daily/2025-11-01.md`
+Candidates:
+- Absolute path: `/Users/kzmshx/Documents/Obsidian/atoms/daily/2025-11-01.md`
+- Relative path: `daily/2025-11-01.md`
 
 ## Decision
 
-`--base-dir` からの相対パスを使用する。
+Use relative paths from `--base-dir`.
 
 ```python
 result["path"] = str(path.relative_to(base_dir))
@@ -24,7 +24,7 @@ result["path"] = str(path.relative_to(base_dir))
 
 ## Consequences
 
-- 環境に依存しない可搬性のあるパス表現
-- 不要なプレフィックスが除去され、出力が簡潔
-- base-dir 外のパスが結果に含まれない
-- 絶対パスが必要な場合はクライアント側で base-dir と結合する必要がある
+- Portable path representation independent of environment
+- Concise output with unnecessary prefixes removed
+- Paths outside base-dir are not included in results
+- Clients need to join with base-dir if absolute paths are required

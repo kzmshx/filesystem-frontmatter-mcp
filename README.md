@@ -1,21 +1,21 @@
 # filesystem-frontmatter-mcp
 
-Markdown ファイルの frontmatter を DuckDB SQL でクエリできる MCP サーバー。
+An MCP server for querying Markdown frontmatter with DuckDB SQL.
 
-## 機能
+## Features
 
-- **inspect_frontmatter**: glob パターンにマッチするファイルの frontmatter スキーマを取得
-- **query_frontmatter**: DuckDB SQL で frontmatter データをクエリ
+- **inspect_frontmatter**: Get frontmatter schema from files matching a glob pattern
+- **query_frontmatter**: Query frontmatter data with DuckDB SQL
 
-## インストール
+## Installation
 
 ```bash
 uv tool install git+https://github.com/kzmshx/filesystem-frontmatter-mcp.git
 ```
 
-## 使い方
+## Usage
 
-### Claude Desktop / Claude Code での設定
+### Configuration for Claude Desktop / Claude Code
 
 ```json
 {
@@ -28,15 +28,15 @@ uv tool install git+https://github.com/kzmshx/filesystem-frontmatter-mcp.git
 }
 ```
 
-### ツールの使用例
+### Tool Examples
 
-#### スキーマの確認
+#### Inspect Schema
 
 ```
 inspect_frontmatter("**/*.md")
 ```
 
-出力例:
+Output example:
 
 ```json
 {
@@ -58,16 +58,16 @@ inspect_frontmatter("**/*.md")
 }
 ```
 
-#### SQL クエリ
+#### SQL Queries
 
 ```sql
--- 今月のファイル一覧
+-- List files from this month
 SELECT path, date, tags
 FROM files
 WHERE date LIKE '2025-11-%'
 ORDER BY date DESC
 
--- タグの集計（配列を展開）
+-- Aggregate tags (expanding arrays)
 SELECT tag, COUNT(*) as count
 FROM files, UNNEST(from_json(tags, '[""]')) AS t(tag)
 WHERE date LIKE '2025-11-%'
@@ -75,21 +75,21 @@ GROUP BY tag
 ORDER BY count DESC
 ```
 
-## 技術的な注意点
+## Technical Notes
 
-### すべての値は文字列
+### All Values Are Strings
 
-frontmatter の値はすべて文字列として DuckDB に渡される。型変換が必要な場合は SQL 側で `TRY_CAST` を使用する。
+All frontmatter values are passed to DuckDB as strings. Use `TRY_CAST` in SQL for type conversion when needed.
 
 ```sql
--- 日付での比較
+-- Date comparison
 SELECT * FROM files
 WHERE TRY_CAST(date AS DATE) >= '2025-11-01'
 ```
 
-### 配列は JSON 文字列
+### Arrays Are JSON Strings
 
-`tags: [ai, python]` のような配列は JSON 文字列 `'["ai", "python"]'` として格納される。展開には `from_json()` と `UNNEST` を使用する。
+Arrays like `tags: [ai, python]` are stored as JSON strings `'["ai", "python"]'`. Use `from_json()` and `UNNEST` to expand them.
 
 ```sql
 SELECT path, tag
@@ -97,10 +97,10 @@ FROM files, UNNEST(from_json(tags, '[""]')) AS t(tag)
 WHERE tag = 'ai'
 ```
 
-### Templater 式への対応
+### Templater Expression Support
 
-Obsidian Templater プラグインの式（`<% tp.date.now("YYYY-MM-DD") %>`）がそのまま含まれるファイルも処理できる。これらは文字列として扱われ、日付フィルタリングで自動的に除外される。
+Files containing Obsidian Templater expressions (e.g., `<% tp.date.now("YYYY-MM-DD") %>`) are handled gracefully. These expressions are treated as strings and naturally excluded by date filtering.
 
-## ライセンス
+## License
 
 MIT

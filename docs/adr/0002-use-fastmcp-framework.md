@@ -8,9 +8,9 @@ Accepted
 
 ## Context
 
-MCP サーバーを Python で実装するにあたり、ツール定義の方法を選択する必要があった。
+When implementing the MCP server in Python, we needed to choose how to define tools.
 
-初期実装では手動でツールスキーマを定義していた:
+The initial implementation used manual tool schema definitions:
 
 ```python
 TOOLS = [
@@ -30,7 +30,7 @@ TOOLS = [
 
 ## Decision
 
-FastMCP を採用し、デコレータベースのツール定義に移行した。
+Adopted FastMCP and migrated to decorator-based tool definitions.
 
 ```python
 @mcp.tool()
@@ -44,7 +44,7 @@ def inspect_frontmatter(glob: str) -> str:
 
 ## Consequences
 
-- コード量が約 50% 削減された
-- 関数定義がそのままツール定義になり、docstring から説明が自動生成される
-- 型ヒントからスキーマが自動生成される
-- FastMCP への依存が追加された
+- Code reduced by approximately 50%
+- Function definitions directly become tool definitions, with descriptions auto-generated from docstrings
+- Schemas are auto-generated from type hints
+- Added dependency on FastMCP
