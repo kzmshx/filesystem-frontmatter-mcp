@@ -1,6 +1,5 @@
 """Frontmatter parser module."""
 
-from datetime import date, datetime
 from pathlib import Path
 from typing import Any
 
@@ -55,47 +54,21 @@ def parse_files(
     return records, warnings
 
 
-def infer_type(value: Any) -> str:
-    """Infer DuckDB-compatible type from Python value.
-
-    Args:
-        value: Python value from frontmatter.
-
-    Returns:
-        Type string for schema information.
-    """
-    if value is None:
-        return "null"
-    if isinstance(value, bool):
-        return "boolean"
-    if isinstance(value, int):
-        return "integer"
-    if isinstance(value, float):
-        return "double"
-    if isinstance(value, date) and not isinstance(value, datetime):
-        return "date"
-    if isinstance(value, datetime):
-        return "timestamp"
-    if isinstance(value, list):
-        if value and all(isinstance(v, str) for v in value):
-            return "array<string>"
-        return "array"
-    if isinstance(value, str):
-        return "string"
-    return "json"
-
-
 def infer_schema(
     records: list[dict[str, Any]], max_samples: int = 5
 ) -> dict[str, dict[str, Any]]:
-    """Infer schema from parsed records.
+    """Collect schema information from parsed records.
+
+    Note: This does not perform type inference. All values are treated
+    as strings in DuckDB queries. This function provides metadata about
+    what properties exist and their sample values.
 
     Args:
         records: List of parsed frontmatter records.
         max_samples: Maximum number of sample values to include.
 
     Returns:
-        Schema dict with type, count, nullable, sample_values for each property.
+        Schema dict with count, nullable, sample_values for each property.
     """
     schema: dict[str, dict[str, Any]] = {}
     property_values: dict[str, list[Any]] = {}
@@ -114,10 +87,8 @@ def infer_schema(
         non_null_values = [v for v in values if v is not None]
         count = len(non_null_values)
 
-        # Infer type from first non-null value
-        inferred_type = "null"
-        if non_null_values:
-            inferred_type = infer_type(non_null_values[0])
+        # Detect if values are arrays
+        is_array = any(isinstance(v, list) for v in non_null_values)
 
         # Collect unique sample values
         seen: set[str] = set()
@@ -129,7 +100,7 @@ def infer_schema(
                 samples.append(v)
 
         schema[prop] = {
-            "type": inferred_type,
+            "type": "array" if is_array else "string",
             "count": count,
             "nullable": count < total_files,
             "sample_values": samples,

@@ -5,7 +5,6 @@ from pathlib import Path
 
 from filesystem_frontmatter_mcp.parser import (
     infer_schema,
-    infer_type,
     parse_file,
     parse_files,
 )
@@ -98,57 +97,24 @@ invalid: yaml: content: [
         assert "error" in warnings[0]
 
 
-class TestInferType:
-    """Tests for infer_type function."""
-
-    def test_string(self) -> None:
-        assert infer_type("hello") == "string"
-
-    def test_integer(self) -> None:
-        assert infer_type(42) == "integer"
-
-    def test_float(self) -> None:
-        assert infer_type(3.14) == "double"
-
-    def test_boolean(self) -> None:
-        assert infer_type(True) == "boolean"
-        assert infer_type(False) == "boolean"
-
-    def test_date(self) -> None:
-        assert infer_type(date(2025, 11, 27)) == "date"
-
-    def test_list_of_strings(self) -> None:
-        assert infer_type(["a", "b", "c"]) == "array<string>"
-
-    def test_empty_list(self) -> None:
-        assert infer_type([]) == "array"
-
-    def test_mixed_list(self) -> None:
-        assert infer_type([1, "two", 3]) == "array"
-
-    def test_null(self) -> None:
-        assert infer_type(None) == "null"
-
-    def test_dict(self) -> None:
-        assert infer_type({"key": "value"}) == "json"
-
-
 class TestInferSchema:
     """Tests for infer_schema function."""
 
     def test_basic_types(self) -> None:
-        """Infer schema with date and array<string> types."""
+        """Detect string and array types."""
         records = [
             {"path": "a.md", "date": date(2025, 11, 27), "tags": ["mcp"]},
             {"path": "b.md", "date": date(2025, 11, 26), "tags": ["python", "duckdb"]},
         ]
         schema = infer_schema(records)
 
-        assert schema["date"]["type"] == "date"
+        # All non-array values are reported as "string"
+        assert schema["date"]["type"] == "string"
         assert schema["date"]["count"] == 2
         assert schema["date"]["nullable"] is False
 
-        assert schema["tags"]["type"] == "array<string>"
+        # Arrays are detected
+        assert schema["tags"]["type"] == "array"
         assert schema["tags"]["count"] == 2
 
     def test_nullable_detection(self) -> None:

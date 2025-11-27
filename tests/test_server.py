@@ -96,21 +96,23 @@ class TestQueryFrontmatter:
         assert "b.md" in paths
 
     def test_tag_contains(self, temp_base_dir: Path) -> None:
-        """Filter by tag."""
+        """Filter by tag using from_json."""
         result_json = server_module.query_frontmatter(
-            "**/*.md", "SELECT path FROM files WHERE list_contains(tags, 'python')"
+            "**/*.md",
+            """SELECT path FROM files
+               WHERE list_contains(from_json(tags, '["VARCHAR"]'), 'python')""",
         )
         result = json.loads(result_json)
 
         assert result["row_count"] == 2
 
     def test_tag_aggregation(self, temp_base_dir: Path) -> None:
-        """Aggregate tags."""
+        """Aggregate tags using from_json."""
         result_json = server_module.query_frontmatter(
             "**/*.md",
             """
             SELECT tag, COUNT(*) AS count
-            FROM files, UNNEST(tags) AS t(tag)
+            FROM files, UNNEST(from_json(tags, '["VARCHAR"]')) AS t(tag)
             GROUP BY tag
             ORDER BY count DESC
             """,

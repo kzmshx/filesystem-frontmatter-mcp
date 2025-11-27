@@ -60,14 +60,17 @@ class TestExecuteQuery:
         assert result["results"][1]["path"] == "b.md"
 
     def test_array_contains(self) -> None:
-        """Filter by array containment using list_contains."""
+        """Filter by array containment using from_json."""
         records = [
             {"path": "a.md", "tags": ["mcp", "python"]},
             {"path": "b.md", "tags": ["duckdb"]},
             {"path": "c.md", "tags": ["mcp", "duckdb"]},
         ]
+        # Arrays are JSON-encoded strings, use from_json to parse
         result = execute_query(
-            records, "SELECT path FROM files WHERE list_contains(tags, 'mcp')"
+            records,
+            """SELECT path FROM files
+               WHERE list_contains(from_json(tags, '["VARCHAR"]'), 'mcp')""",
         )
 
         assert result["row_count"] == 2
@@ -88,16 +91,17 @@ class TestExecuteQuery:
         assert result["results"][0]["count"] == 3
 
     def test_unnest_tags(self) -> None:
-        """Unnest array and aggregate."""
+        """Unnest array and aggregate using from_json."""
         records = [
             {"path": "a.md", "tags": ["mcp", "python"]},
             {"path": "b.md", "tags": ["mcp"]},
         ]
+        # Arrays are JSON-encoded strings, use from_json then unnest
         result = execute_query(
             records,
             """
             SELECT tag, COUNT(*) AS count
-            FROM files, UNNEST(tags) AS t(tag)
+            FROM files, UNNEST(from_json(tags, '["VARCHAR"]')) AS t(tag)
             GROUP BY tag
             ORDER BY count DESC
             """,

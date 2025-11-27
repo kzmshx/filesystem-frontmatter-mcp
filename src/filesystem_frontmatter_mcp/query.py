@@ -1,13 +1,30 @@
 """DuckDB query execution module."""
 
+import json
 from typing import Any
 
 import duckdb
 import pyarrow as pa
 
 
+def _serialize_value(value: Any) -> str | None:
+    """Serialize a value to string for DuckDB.
+
+    Arrays are JSON-encoded, other values are converted to string.
+    None remains None.
+    """
+    if value is None:
+        return None
+    if isinstance(value, list):
+        return json.dumps(value, ensure_ascii=False)
+    return str(value)
+
+
 def execute_query(records: list[dict[str, Any]], sql: str) -> dict[str, Any]:
     """Execute DuckDB SQL query on frontmatter records.
+
+    All values are passed as strings to DuckDB. Use TRY_CAST in SQL
+    for type conversion. Arrays are JSON-encoded strings.
 
     Args:
         records: List of parsed frontmatter records.
@@ -17,27 +34,26 @@ def execute_query(records: list[dict[str, Any]], sql: str) -> dict[str, Any]:
         Dictionary with results, row_count, and columns.
     """
     if not records:
-        # Handle empty records case
         return {
             "results": [],
             "row_count": 0,
             "columns": [],
         }
 
-    # Convert records to pyarrow Table
-    # First, collect all unique keys across all records
+    # Collect all unique keys across all records
     all_keys: set[str] = set()
     for record in records:
         all_keys.update(record.keys())
 
-    # Build columns dict with None for missing keys
-    columns_data: dict[str, list[Any]] = {key: [] for key in all_keys}
+    # Build columns dict with serialized string values
+    columns_data: dict[str, list[str | None]] = {key: [] for key in all_keys}
     for record in records:
         for key in all_keys:
-            columns_data[key].append(record.get(key))
+            columns_data[key].append(_serialize_value(record.get(key)))
 
-    # Create pyarrow table
-    table = pa.table(columns_data)
+    # Create pyarrow table with explicit string type for all columns
+    schema = pa.schema([(key, pa.string()) for key in all_keys])
+    table = pa.table(columns_data, schema=schema)
 
     # Create connection and register table
     conn = duckdb.connect(":memory:")
