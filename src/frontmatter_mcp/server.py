@@ -54,7 +54,7 @@ def inspect_frontmatter(glob: str) -> str:
     if warnings:
         result["warnings"] = warnings
 
-    return json.dumps(result, default=str)
+    return json.dumps(result, default=str, ensure_ascii=False)
 
 
 @mcp.tool()
@@ -82,7 +82,7 @@ def query_frontmatter(glob: str, sql: str) -> str:
     if warnings:
         result["warnings"] = warnings
 
-    return json.dumps(result, default=str)
+    return json.dumps(result, default=str, ensure_ascii=False)
 
 
 def main() -> None:
