@@ -8,13 +8,13 @@ from typing import Any
 
 from mcp.server.fastmcp import FastMCP
 
-from filesystem_frontmatter_mcp.parser import infer_schema, parse_files
-from filesystem_frontmatter_mcp.query import execute_query
+from frontmatter_mcp.parser import infer_schema, parse_files
+from frontmatter_mcp.query import execute_query
 
 # Global base directory
 _base_dir: Path | None = None
 
-mcp = FastMCP("filesystem-frontmatter-mcp")
+mcp = FastMCP("frontmatter-mcp")
 
 
 def get_base_dir() -> Path:
@@ -93,7 +93,7 @@ def main() -> None:
     args = sys.argv[1:]
     if "--base-dir" not in args:
         print("Error: --base-dir argument is required", file=sys.stderr)
-        print("Usage: filesystem-frontmatter-mcp --base-dir /path", file=sys.stderr)
+        print("Usage: frontmatter-mcp --base-dir /path", file=sys.stderr)
         sys.exit(1)
 
     base_dir_idx = args.index("--base-dir")

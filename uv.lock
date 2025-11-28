@@ -229,7 +229,7 @@ wheels = [
 ]
 
 [[package]]
-name = "filesystem-frontmatter-mcp"
+name = "frontmatter-mcp"
 version = "0.1.0"
 source = { editable = "." }
 dependencies = [

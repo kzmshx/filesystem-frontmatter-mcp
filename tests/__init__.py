@@ -1,1 +1,1 @@
-"""Tests for filesystem-frontmatter-mcp."""
+"""Tests for frontmatter-mcp."""

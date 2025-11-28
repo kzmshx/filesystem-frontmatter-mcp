@@ -3,7 +3,7 @@
 from datetime import date
 from pathlib import Path
 
-from filesystem_frontmatter_mcp.parser import (
+from frontmatter_mcp.parser import (
     infer_schema,
     parse_file,
     parse_files,

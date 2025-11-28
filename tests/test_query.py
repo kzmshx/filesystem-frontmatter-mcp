@@ -2,7 +2,7 @@
 
 from datetime import date
 
-from filesystem_frontmatter_mcp.query import execute_query
+from frontmatter_mcp.query import execute_query
 
 
 class TestExecuteQuery:

@@ -6,7 +6,7 @@ from pathlib import Path
 
 import pytest
 
-import filesystem_frontmatter_mcp.server as server_module
+import frontmatter_mcp.server as server_module
 
 
 @pytest.fixture
