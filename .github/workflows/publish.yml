@@ -41,6 +41,11 @@ jobs:
         with:
           repository-url: https://test.pypi.org/legacy/
 
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
       - name: Extract version from tag
         run: echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_ENV
 
