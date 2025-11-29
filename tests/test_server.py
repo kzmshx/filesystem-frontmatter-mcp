@@ -4,6 +4,7 @@ import datetime
 import tempfile
 from pathlib import Path
 
+import frontmatter
 import pytest
 
 import frontmatter_mcp.server as server_module
@@ -122,17 +123,13 @@ class TestUpdate:
     def test_set_property(self, temp_base_dir: Path) -> None:
         """Set a property on a file."""
         result = server_module.update("a.md", set={"status": "published"})
-
         assert result["path"] == "a.md"
         assert result["frontmatter"]["status"] == "published"
-        # frontmatter library parses YAML dates as datetime.date objects
-
         assert result["frontmatter"]["date"] == datetime.date(2025, 11, 27)
 
     def test_unset_property(self, temp_base_dir: Path) -> None:
         """Unset a property from a file."""
         result = server_module.update("b.md", unset=["tags"])
-
         assert "tags" not in result["frontmatter"]
 
     def test_set_and_unset(self, temp_base_dir: Path) -> None:
@@ -140,7 +137,6 @@ class TestUpdate:
         result = server_module.update(
             "subdir/c.md", set={"status": "done"}, unset=["summary"]
         )
-
         assert result["path"] == "subdir/c.md"
         assert result["frontmatter"]["status"] == "done"
         assert "summary" not in result["frontmatter"]
@@ -162,13 +158,9 @@ class TestBatchUpdate:
     def test_set_property_all_files(self, temp_base_dir: Path) -> None:
         """Set a property on all matching files."""
         result = server_module.batch_update("*.md", set={"status": "reviewed"})
-
         assert result["updated_count"] == 2
         assert "a.md" in result["updated_files"]
         assert "b.md" in result["updated_files"]
-
-        # Verify files were actually updated
-        import frontmatter
 
         post = frontmatter.load(temp_base_dir / "a.md")
         assert post["status"] == "reviewed"
@@ -176,17 +168,13 @@ class TestBatchUpdate:
     def test_recursive_glob(self, temp_base_dir: Path) -> None:
         """Update all files including subdirectories."""
         result = server_module.batch_update("**/*.md", set={"batch": True})
-
         assert result["updated_count"] == 3
         assert "subdir/c.md" in result["updated_files"]
 
     def test_unset_property(self, temp_base_dir: Path) -> None:
         """Unset a property from all matching files."""
         result = server_module.batch_update("**/*.md", unset=["tags"])
-
         assert result["updated_count"] == 3
-
-        import frontmatter
 
         post = frontmatter.load(temp_base_dir / "a.md")
         assert "tags" not in post.keys()
@@ -196,10 +184,7 @@ class TestBatchUpdate:
         result = server_module.batch_update(
             "**/*.md", set={"new_prop": "value"}, unset=["date"]
         )
-
         assert result["updated_count"] == 3
-
-        import frontmatter
 
         post = frontmatter.load(temp_base_dir / "b.md")
         assert post["new_prop"] == "value"
@@ -208,14 +193,12 @@ class TestBatchUpdate:
     def test_no_matching_files(self, temp_base_dir: Path) -> None:
         """Handle no matching files gracefully."""
         result = server_module.batch_update("*.txt", set={"x": 1})
-
         assert result["updated_count"] == 0
         assert result["updated_files"] == []
 
     def test_no_warnings_key_when_success(self, temp_base_dir: Path) -> None:
         """Warnings key is absent when all updates succeed."""
         result = server_module.batch_update("*.md", set={"status": "ok"})
-
         assert result["updated_count"] == 2
         assert "warnings" not in result
 
@@ -227,7 +210,6 @@ class TestBatchUpdate:
         )
 
         result = server_module.batch_update("*.md", set={"status": "ok"})
-
         # a.md and b.md should succeed, malformed.md should fail
         assert result["updated_count"] == 2
         assert "warnings" in result
