@@ -147,6 +147,16 @@ Remove a value from an array property in multiple files.
 | `property` | string | Name of the array property              |
 | `value`    | any    | Value to remove                         |
 
+**Example:**
+
+```json
+// Input
+{ "glob": "**/*.md", "property": "tags", "value": "draft" }
+
+// Output
+{ "updated_count": 15, "updated_files": ["a.md", "b.md", ...] }
+```
+
 ### batch_array_replace
 
 Replace a value in an array property in multiple files.
@@ -158,6 +168,16 @@ Replace a value in an array property in multiple files.
 | `old_value` | any    | Value to replace                        |
 | `new_value` | any    | New value                               |
 
+**Example:**
+
+```json
+// Input
+{ "glob": "**/*.md", "property": "tags", "old_value": "draft", "new_value": "review" }
+
+// Output
+{ "updated_count": 10, "updated_files": ["a.md", "b.md", ...] }
+```
+
 ### batch_array_sort
 
 Sort an array property in multiple files.
@@ -167,6 +187,16 @@ Sort an array property in multiple files.
 | `glob`     | string | Glob pattern relative to base directory |
 | `property` | string | Name of the array property              |
 | `reverse`  | bool   | Sort in descending order (default: false)|
+
+**Example:**
+
+```json
+// Input
+{ "glob": "**/*.md", "property": "tags" }
+
+// Output
+{ "updated_count": 20, "updated_files": ["a.md", "b.md", ...] }
+```
 
 ## Technical Notes
 
