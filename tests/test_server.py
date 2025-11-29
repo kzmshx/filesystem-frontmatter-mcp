@@ -1,5 +1,6 @@
 """Tests for MCP server module."""
 
+import datetime
 import tempfile
 from pathlib import Path
 
@@ -127,7 +128,6 @@ class TestUpdateFrontmatter:
         assert result["path"] == "a.md"
         assert result["frontmatter"]["status"] == "published"
         # frontmatter library parses YAML dates as datetime.date objects
-        import datetime
 
         assert result["frontmatter"]["date"] == datetime.date(2025, 11, 27)
 
