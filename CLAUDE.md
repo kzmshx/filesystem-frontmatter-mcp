@@ -23,6 +23,16 @@
 5. 作業一段落ごとに `NOTES_{YYYYMMDD_HHMMSS}.md` を作成
 6. PR 作成・マージ
 
+## PR レビュー対応
+
+| 操作             | コマンド                                                                                    |
+| ---------------- | ------------------------------------------------------------------------------------------- |
+| CI 状態確認      | `gh pr checks {n}`                                                                          |
+| コメント取得     | `gh api repos/{owner}/{repo}/pulls/{n}/comments`                                            |
+| コメントへの返信 | `gh api repos/{owner}/{repo}/pulls/{n}/comments/{comment_id}/replies -X POST -f body="..."` |
+
+修正後はコミットハッシュ付きでコメントに返信する。
+
 ## ドキュメント構成
 
 ### docs/workspace/{branch}/
