@@ -1,7 +1,6 @@
 """MCP Server implementation using FastMCP."""
 
 import glob as globmodule
-import json
 import sys
 from pathlib import Path
 from typing import Any
@@ -34,14 +33,14 @@ def collect_files(glob_pattern: str) -> list[Path]:
 
 
 @mcp.tool()
-def inspect_frontmatter(glob: str) -> str:
+def inspect_frontmatter(glob: str) -> dict[str, Any]:
     """Get frontmatter schema from files matching glob pattern.
 
     Args:
         glob: Glob pattern relative to base directory (e.g. "atoms/**/*.md").
 
     Returns:
-        JSON with file_count, schema (type, count, nullable, sample_values).
+        Dict with file_count, schema (type, count, nullable, sample_values).
     """
     base = get_base_dir()
     paths = collect_files(glob)
@@ -55,11 +54,11 @@ def inspect_frontmatter(glob: str) -> str:
     if warnings:
         result["warnings"] = warnings
 
-    return json.dumps(result, default=str, ensure_ascii=False)
+    return result
 
 
 @mcp.tool()
-def query_frontmatter(glob: str, sql: str) -> str:
+def query_frontmatter(glob: str, sql: str) -> dict[str, Any]:
     """Query frontmatter with DuckDB SQL.
 
     Args:
@@ -68,7 +67,7 @@ def query_frontmatter(glob: str, sql: str) -> str:
             properties plus 'path'.
 
     Returns:
-        JSON with results array, row_count, and columns.
+        Dict with results array, row_count, and columns.
     """
     base = get_base_dir()
     paths = collect_files(glob)
@@ -83,7 +82,7 @@ def query_frontmatter(glob: str, sql: str) -> str:
     if warnings:
         result["warnings"] = warnings
 
-    return json.dumps(result, default=str, ensure_ascii=False)
+    return result
 
 
 @mcp.tool()
@@ -91,7 +90,7 @@ def update_frontmatter(
     path: str,
     set: dict[str, Any] | None = None,
     unset: list[str] | None = None,
-) -> str:
+) -> dict[str, Any]:
     """Update frontmatter properties in a single file.
 
     Args:
@@ -101,7 +100,7 @@ def update_frontmatter(
         unset: Property names to remove completely.
 
     Returns:
-        JSON with path and updated frontmatter.
+        Dict with path and updated frontmatter.
 
     Notes:
         - If same key appears in both set and unset, unset takes priority.
@@ -119,8 +118,7 @@ def update_frontmatter(
     if not abs_path.exists():
         raise FileNotFoundError(f"File not found: {path}")
 
-    result = update_file(abs_path, base, set_values=set, unset=unset)
-    return json.dumps(result, default=str, ensure_ascii=False)
+    return update_file(abs_path, base, set_values=set, unset=unset)
 
 
 def main() -> None:

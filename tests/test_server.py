@@ -1,6 +1,6 @@
 """Tests for MCP server module."""
 
-import json
+import datetime
 import tempfile
 from pathlib import Path
 
@@ -54,8 +54,7 @@ class TestInspectFrontmatter:
 
     def test_basic_schema(self, temp_base_dir: Path) -> None:
         """Get schema from files."""
-        result_json = server_module.inspect_frontmatter("*.md")
-        result = json.loads(result_json)
+        result = server_module.inspect_frontmatter("*.md")
 
         assert result["file_count"] == 2
         assert "date" in result["schema"]
@@ -63,8 +62,7 @@ class TestInspectFrontmatter:
 
     def test_recursive_glob(self, temp_base_dir: Path) -> None:
         """Get schema with recursive glob."""
-        result_json = server_module.inspect_frontmatter("**/*.md")
-        result = json.loads(result_json)
+        result = server_module.inspect_frontmatter("**/*.md")
 
         assert result["file_count"] == 3
         assert "summary" in result["schema"]
@@ -75,20 +73,18 @@ class TestQueryFrontmatter:
 
     def test_select_all(self, temp_base_dir: Path) -> None:
         """Select all files."""
-        result_json = server_module.query_frontmatter(
+        result = server_module.query_frontmatter(
             "**/*.md", "SELECT path FROM files ORDER BY path"
         )
-        result = json.loads(result_json)
 
         assert result["row_count"] == 3
         assert "path" in result["columns"]
 
     def test_where_clause(self, temp_base_dir: Path) -> None:
         """Filter by date."""
-        result_json = server_module.query_frontmatter(
+        result = server_module.query_frontmatter(
             "**/*.md", "SELECT path FROM files WHERE date >= '2025-11-26'"
         )
-        result = json.loads(result_json)
 
         assert result["row_count"] == 2
         paths = [r["path"] for r in result["results"]]
@@ -97,18 +93,17 @@ class TestQueryFrontmatter:
 
     def test_tag_contains(self, temp_base_dir: Path) -> None:
         """Filter by tag using from_json."""
-        result_json = server_module.query_frontmatter(
+        result = server_module.query_frontmatter(
             "**/*.md",
             """SELECT path FROM files
                WHERE list_contains(from_json(tags, '["VARCHAR"]'), 'python')""",
         )
-        result = json.loads(result_json)
 
         assert result["row_count"] == 2
 
     def test_tag_aggregation(self, temp_base_dir: Path) -> None:
         """Aggregate tags using from_json."""
-        result_json = server_module.query_frontmatter(
+        result = server_module.query_frontmatter(
             "**/*.md",
             """
             SELECT tag, COUNT(*) AS count
@@ -117,7 +112,6 @@ class TestQueryFrontmatter:
             ORDER BY count DESC
             """,
         )
-        result = json.loads(result_json)
 
         assert result["row_count"] == 3
         assert result["results"][0]["tag"] == "python"
@@ -129,28 +123,25 @@ class TestUpdateFrontmatter:
 
     def test_set_property(self, temp_base_dir: Path) -> None:
         """Set a property on a file."""
-        result_json = server_module.update_frontmatter(
-            "a.md", set={"status": "published"}
-        )
-        result = json.loads(result_json)
+        result = server_module.update_frontmatter("a.md", set={"status": "published"})
 
         assert result["path"] == "a.md"
         assert result["frontmatter"]["status"] == "published"
-        assert result["frontmatter"]["date"] == "2025-11-27"
+        # frontmatter library parses YAML dates as datetime.date objects
+
+        assert result["frontmatter"]["date"] == datetime.date(2025, 11, 27)
 
     def test_unset_property(self, temp_base_dir: Path) -> None:
         """Unset a property from a file."""
-        result_json = server_module.update_frontmatter("b.md", unset=["tags"])
-        result = json.loads(result_json)
+        result = server_module.update_frontmatter("b.md", unset=["tags"])
 
         assert "tags" not in result["frontmatter"]
 
     def test_set_and_unset(self, temp_base_dir: Path) -> None:
         """Set and unset properties."""
-        result_json = server_module.update_frontmatter(
+        result = server_module.update_frontmatter(
             "subdir/c.md", set={"status": "done"}, unset=["summary"]
         )
-        result = json.loads(result_json)
 
         assert result["path"] == "subdir/c.md"
         assert result["frontmatter"]["status"] == "done"
