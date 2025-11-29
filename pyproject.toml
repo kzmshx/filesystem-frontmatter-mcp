@@ -3,7 +3,7 @@ name = "frontmatter-mcp"
 version = "0.1.0"
 description = "MCP server for querying Markdown frontmatter with DuckDB SQL"
 authors = [{ name = "kzmshx" }]
-license = { text = "MIT" }
+license = { file = "LICENSE" }
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
