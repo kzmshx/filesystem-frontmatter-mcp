@@ -451,17 +451,24 @@ def batch_array_sort(
                 warnings.append(f"Skipped {rel_path}: '{property}' is not an array")
                 continue
 
-            # Empty array: skip
-            if len(current) == 0:
+            # Empty array or single element: skip (already sorted)
+            if len(current) <= 1:
                 continue
 
-            # Check if already sorted
-            sorted_list = sorted(current, reverse=reverse)
-            if current == sorted_list:
+            # Check if already sorted using pairwise comparison
+            if not reverse:
+                is_sorted = all(
+                    current[i] <= current[i + 1] for i in range(len(current) - 1)
+                )
+            else:
+                is_sorted = all(
+                    current[i] >= current[i + 1] for i in range(len(current) - 1)
+                )
+            if is_sorted:
                 continue
 
             # Sort
-            post[property] = sorted_list
+            post[property] = sorted(current, reverse=reverse)
             frontmatter.dump(post, abs_path)
             updated_files.append(rel_path)
 
