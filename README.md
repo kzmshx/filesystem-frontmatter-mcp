@@ -23,7 +23,7 @@ uv tool install git+https://github.com/kzmshx/frontmatter-mcp.git
 
 ## Tools
 
-### inspect_frontmatter
+### query_inspect
 
 Get schema information from frontmatter across files.
 
@@ -33,37 +33,21 @@ Get schema information from frontmatter across files.
 
 **Example:**
 
-Input:
-
 ```json
-{
-  "glob": "**/*.md"
-}
-```
+// Input
+{ "glob": "**/*.md" }
 
-Output:
-
-```json
+// Output
 {
   "file_count": 186,
   "schema": {
-    "date": {
-      "type": "string",
-      "count": 180,
-      "nullable": true,
-      "sample_values": ["2025-11-01", "2025-11-02"]
-    },
-    "tags": {
-      "type": "array",
-      "count": 150,
-      "nullable": true,
-      "sample_values": [["ai", "claude"], ["python"]]
-    }
+    "date": { "type": "string", "count": 180, "nullable": true },
+    "tags": { "type": "array", "count": 150, "nullable": true }
   }
 }
 ```
 
-### query_frontmatter
+### query
 
 Query frontmatter data with DuckDB SQL.
 
@@ -72,56 +56,27 @@ Query frontmatter data with DuckDB SQL.
 | `glob`    | string | Glob pattern relative to base directory    |
 | `sql`     | string | DuckDB SQL query referencing `files` table |
 
-**Example 1: Filter by date**
-
-Input:
+**Example:**
 
 ```json
+// Input
 {
   "glob": "**/*.md",
-  "sql": "SELECT path, date, tags FROM files WHERE date LIKE '2025-11-%' ORDER BY date DESC"
+  "sql": "SELECT path, date FROM files WHERE date >= '2025-11-01' ORDER BY date DESC"
 }
-```
 
-Output:
-
-```json
+// Output
 {
-  "columns": ["path", "date", "tags"],
+  "columns": ["path", "date"],
   "row_count": 24,
   "results": [
-    {"path": "daily/2025-11-28.md", "date": "2025-11-28", "tags": "[\"journal\"]"},
-    {"path": "daily/2025-11-27.md", "date": "2025-11-27", "tags": "[\"journal\"]"}
+    {"path": "daily/2025-11-28.md", "date": "2025-11-28"},
+    {"path": "daily/2025-11-27.md", "date": "2025-11-27"}
   ]
 }
 ```
 
-**Example 2: Aggregate tags**
-
-Input:
-
-```json
-{
-  "glob": "**/*.md",
-  "sql": "SELECT tag, COUNT(*) as count FROM files, UNNEST(from_json(tags, '[\"\"]')) AS t(tag) GROUP BY tag ORDER BY count DESC LIMIT 5"
-}
-```
-
-Output:
-
-```json
-{
-  "columns": ["tag", "count"],
-  "row_count": 5,
-  "results": [
-    {"tag": "ai", "count": 42},
-    {"tag": "python", "count": 35},
-    {"tag": "mcp", "count": 18}
-  ]
-}
-```
-
-### update_frontmatter
+### update
 
 Update frontmatter properties in a single file.
 
@@ -131,46 +86,87 @@ Update frontmatter properties in a single file.
 | `set`     | object   | Properties to add or overwrite       |
 | `unset`   | string[] | Property names to remove             |
 
-**Example 1: Set properties**
-
-Input:
+**Example:**
 
 ```json
-{
-  "path": "notes/idea.md",
-  "set": {"status": "published", "tags": ["ai", "python"]}
-}
+// Input
+{ "path": "notes/idea.md", "set": {"status": "published"} }
+
+// Output
+{ "path": "notes/idea.md", "frontmatter": {"title": "Idea", "status": "published"} }
 ```
 
-Output:
+### batch_update
+
+Update frontmatter properties in multiple files.
+
+| Parameter | Type     | Description                             |
+| --------- | -------- | --------------------------------------- |
+| `glob`    | string   | Glob pattern relative to base directory |
+| `set`     | object   | Properties to add or overwrite          |
+| `unset`   | string[] | Property names to remove                |
+
+**Example:**
 
 ```json
-{
-  "path": "notes/idea.md",
-  "frontmatter": {
-    "title": "Idea",
-    "status": "published",
-    "tags": ["ai", "python"]
-  }
-}
+// Input
+{ "glob": "drafts/*.md", "set": {"status": "review"} }
+
+// Output
+{ "updated_count": 5, "updated_files": ["drafts/a.md", "drafts/b.md", ...] }
 ```
 
-**Example 2: Remove properties**
+### batch_array_add
 
-Input:
+Add a value to an array property in multiple files.
+
+| Parameter          | Type   | Description                                |
+| ------------------ | ------ | ------------------------------------------ |
+| `glob`             | string | Glob pattern relative to base directory    |
+| `property`         | string | Name of the array property                 |
+| `value`            | any    | Value to add                               |
+| `allow_duplicates` | bool   | Allow duplicate values (default: false)    |
+
+**Example:**
 
 ```json
-{
-  "path": "notes/draft.md",
-  "unset": ["draft"]
-}
+// Input
+{ "glob": "**/*.md", "property": "tags", "value": "reviewed" }
+
+// Output
+{ "updated_count": 42, "updated_files": ["a.md", "b.md", ...] }
 ```
 
-**Notes:**
+### batch_array_remove
 
-- Values in `set` are applied as-is: `null` becomes YAML `null`, `""` becomes empty string
-- If same key appears in both `set` and `unset`, `unset` takes priority
-- File content (body) is preserved
+Remove a value from an array property in multiple files.
+
+| Parameter  | Type   | Description                             |
+| ---------- | ------ | --------------------------------------- |
+| `glob`     | string | Glob pattern relative to base directory |
+| `property` | string | Name of the array property              |
+| `value`    | any    | Value to remove                         |
+
+### batch_array_replace
+
+Replace a value in an array property in multiple files.
+
+| Parameter   | Type   | Description                             |
+| ----------- | ------ | --------------------------------------- |
+| `glob`      | string | Glob pattern relative to base directory |
+| `property`  | string | Name of the array property              |
+| `old_value` | any    | Value to replace                        |
+| `new_value` | any    | New value                               |
+
+### batch_array_sort
+
+Sort an array property in multiple files.
+
+| Parameter  | Type   | Description                             |
+| ---------- | ------ | --------------------------------------- |
+| `glob`     | string | Glob pattern relative to base directory |
+| `property` | string | Name of the array property              |
+| `reverse`  | bool   | Sort in descending order (default: false)|
 
 ## Technical Notes
 
