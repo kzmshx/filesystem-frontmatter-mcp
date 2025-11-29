@@ -173,6 +173,311 @@ def batch_update(
     return response
 
 
+@mcp.tool()
+def batch_array_add(
+    glob: str,
+    property: str,
+    value: Any,
+    allow_duplicates: bool = False,
+) -> dict[str, Any]:
+    """Add a value to an array property in multiple files.
+
+    Args:
+        glob: Glob pattern relative to base directory (e.g. "atoms/**/*.md").
+        property: Name of the array property.
+        value: Value to add. If value is an array, it's added as a single element.
+        allow_duplicates: If False (default), skip files where value already exists.
+
+    Returns:
+        Dict with updated_count, updated_files, and warnings.
+
+    Notes:
+        - If property doesn't exist, it will be created with [value].
+        - If property is not an array, file is skipped with a warning.
+        - Files are only included in updated_files if actually modified.
+    """
+    import frontmatter
+
+    base = get_base_dir().resolve()
+    paths = collect_files(glob)
+
+    updated_files: list[str] = []
+    warnings: list[str] = []
+
+    for file_path in paths:
+        abs_path = file_path.resolve()
+        try:
+            rel_path = str(abs_path.relative_to(base))
+        except ValueError:
+            warnings.append(f"Skipped (outside base directory): {abs_path}")
+            continue
+
+        try:
+            post = frontmatter.load(abs_path)
+            current = post.get(property)
+
+            # Property doesn't exist: create new array
+            if current is None:
+                post[property] = [value]
+                frontmatter.dump(post, abs_path)
+                updated_files.append(rel_path)
+                continue
+
+            # Property is not an array: skip with warning
+            if not isinstance(current, list):
+                warnings.append(f"Skipped {rel_path}: '{property}' is not an array")
+                continue
+
+            # Check for duplicates
+            if not allow_duplicates and value in current:
+                continue
+
+            # Add value
+            current.append(value)
+            frontmatter.dump(post, abs_path)
+            updated_files.append(rel_path)
+
+        except Exception as e:
+            warnings.append(f"Failed to update {rel_path}: {e}")
+
+    response: dict[str, Any] = {
+        "updated_count": len(updated_files),
+        "updated_files": updated_files,
+    }
+    if warnings:
+        response["warnings"] = warnings
+
+    return response
+
+
+@mcp.tool()
+def batch_array_remove(
+    glob: str,
+    property: str,
+    value: Any,
+) -> dict[str, Any]:
+    """Remove a value from an array property in multiple files.
+
+    Args:
+        glob: Glob pattern relative to base directory (e.g. "atoms/**/*.md").
+        property: Name of the array property.
+        value: Value to remove.
+
+    Returns:
+        Dict with updated_count, updated_files, and warnings.
+
+    Notes:
+        - If property doesn't exist, file is skipped.
+        - If value doesn't exist in array, file is skipped.
+        - If property is not an array, file is skipped with a warning.
+        - Files are only included in updated_files if actually modified.
+    """
+    import frontmatter
+
+    base = get_base_dir().resolve()
+    paths = collect_files(glob)
+
+    updated_files: list[str] = []
+    warnings: list[str] = []
+
+    for file_path in paths:
+        abs_path = file_path.resolve()
+        try:
+            rel_path = str(abs_path.relative_to(base))
+        except ValueError:
+            warnings.append(f"Skipped (outside base directory): {abs_path}")
+            continue
+
+        try:
+            post = frontmatter.load(abs_path)
+            current = post.get(property)
+
+            # Property doesn't exist: skip
+            if current is None:
+                continue
+
+            # Property is not an array: skip with warning
+            if not isinstance(current, list):
+                warnings.append(f"Skipped {rel_path}: '{property}' is not an array")
+                continue
+
+            # Value doesn't exist: skip
+            if value not in current:
+                continue
+
+            # Remove value
+            current.remove(value)
+            frontmatter.dump(post, abs_path)
+            updated_files.append(rel_path)
+
+        except Exception as e:
+            warnings.append(f"Failed to update {rel_path}: {e}")
+
+    response: dict[str, Any] = {
+        "updated_count": len(updated_files),
+        "updated_files": updated_files,
+    }
+    if warnings:
+        response["warnings"] = warnings
+
+    return response
+
+
+@mcp.tool()
+def batch_array_replace(
+    glob: str,
+    property: str,
+    old_value: Any,
+    new_value: Any,
+) -> dict[str, Any]:
+    """Replace a value in an array property in multiple files.
+
+    Args:
+        glob: Glob pattern relative to base directory (e.g. "atoms/**/*.md").
+        property: Name of the array property.
+        old_value: Value to replace.
+        new_value: New value.
+
+    Returns:
+        Dict with updated_count, updated_files, and warnings.
+
+    Notes:
+        - If property doesn't exist, file is skipped.
+        - If old_value doesn't exist in array, file is skipped.
+        - If property is not an array, file is skipped with a warning.
+        - Files are only included in updated_files if actually modified.
+    """
+    import frontmatter
+
+    base = get_base_dir().resolve()
+    paths = collect_files(glob)
+
+    updated_files: list[str] = []
+    warnings: list[str] = []
+
+    for file_path in paths:
+        abs_path = file_path.resolve()
+        try:
+            rel_path = str(abs_path.relative_to(base))
+        except ValueError:
+            warnings.append(f"Skipped (outside base directory): {abs_path}")
+            continue
+
+        try:
+            post = frontmatter.load(abs_path)
+            current = post.get(property)
+
+            # Property doesn't exist: skip
+            if current is None:
+                continue
+
+            # Property is not an array: skip with warning
+            if not isinstance(current, list):
+                warnings.append(f"Skipped {rel_path}: '{property}' is not an array")
+                continue
+
+            # Old value doesn't exist: skip
+            if old_value not in current:
+                continue
+
+            # Replace value
+            idx = current.index(old_value)
+            current[idx] = new_value
+            frontmatter.dump(post, abs_path)
+            updated_files.append(rel_path)
+
+        except Exception as e:
+            warnings.append(f"Failed to update {rel_path}: {e}")
+
+    response: dict[str, Any] = {
+        "updated_count": len(updated_files),
+        "updated_files": updated_files,
+    }
+    if warnings:
+        response["warnings"] = warnings
+
+    return response
+
+
+@mcp.tool()
+def batch_array_sort(
+    glob: str,
+    property: str,
+    reverse: bool = False,
+) -> dict[str, Any]:
+    """Sort an array property in multiple files.
+
+    Args:
+        glob: Glob pattern relative to base directory (e.g. "atoms/**/*.md").
+        property: Name of the array property.
+        reverse: If True, sort in descending order. Default is ascending.
+
+    Returns:
+        Dict with updated_count, updated_files, and warnings.
+
+    Notes:
+        - If property doesn't exist, file is skipped.
+        - If array is empty, file is skipped.
+        - If array is already sorted, file is skipped.
+        - If property is not an array, file is skipped with a warning.
+        - Files are only included in updated_files if actually modified.
+    """
+    import frontmatter
+
+    base = get_base_dir().resolve()
+    paths = collect_files(glob)
+
+    updated_files: list[str] = []
+    warnings: list[str] = []
+
+    for file_path in paths:
+        abs_path = file_path.resolve()
+        try:
+            rel_path = str(abs_path.relative_to(base))
+        except ValueError:
+            warnings.append(f"Skipped (outside base directory): {abs_path}")
+            continue
+
+        try:
+            post = frontmatter.load(abs_path)
+            current = post.get(property)
+
+            # Property doesn't exist: skip
+            if current is None:
+                continue
+
+            # Property is not an array: skip with warning
+            if not isinstance(current, list):
+                warnings.append(f"Skipped {rel_path}: '{property}' is not an array")
+                continue
+
+            # Empty array: skip
+            if len(current) == 0:
+                continue
+
+            # Check if already sorted
+            sorted_list = sorted(current, reverse=reverse)
+            if current == sorted_list:
+                continue
+
+            # Sort
+            post[property] = sorted_list
+            frontmatter.dump(post, abs_path)
+            updated_files.append(rel_path)
+
+        except Exception as e:
+            warnings.append(f"Failed to update {rel_path}: {e}")
+
+    response: dict[str, Any] = {
+        "updated_count": len(updated_files),
+        "updated_files": updated_files,
+    }
+    if warnings:
+        response["warnings"] = warnings
+
+    return response
+
+
 def main() -> None:
     """Entry point for the MCP server."""
     global _base_dir
