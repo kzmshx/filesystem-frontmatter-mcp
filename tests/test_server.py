@@ -56,7 +56,6 @@ class TestQueryInspect:
     def test_basic_schema(self, temp_base_dir: Path) -> None:
         """Get schema from files."""
         result = server_module.query_inspect("*.md")
-
         assert result["file_count"] == 2
         assert "date" in result["schema"]
         assert "tags" in result["schema"]
@@ -64,7 +63,6 @@ class TestQueryInspect:
     def test_recursive_glob(self, temp_base_dir: Path) -> None:
         """Get schema with recursive glob."""
         result = server_module.query_inspect("**/*.md")
-
         assert result["file_count"] == 3
         assert "summary" in result["schema"]
 
@@ -75,7 +73,6 @@ class TestQuery:
     def test_select_all(self, temp_base_dir: Path) -> None:
         """Select all files."""
         result = server_module.query("**/*.md", "SELECT path FROM files ORDER BY path")
-
         assert result["row_count"] == 3
         assert "path" in result["columns"]
 
@@ -84,7 +81,6 @@ class TestQuery:
         result = server_module.query(
             "**/*.md", "SELECT path FROM files WHERE date >= '2025-11-26'"
         )
-
         assert result["row_count"] == 2
         paths = [r["path"] for r in result["results"]]
         assert "a.md" in paths
@@ -97,7 +93,6 @@ class TestQuery:
             """SELECT path FROM files
                WHERE list_contains(from_json(tags, '["VARCHAR"]'), 'python')""",
         )
-
         assert result["row_count"] == 2
 
     def test_tag_aggregation(self, temp_base_dir: Path) -> None:
@@ -111,7 +106,6 @@ class TestQuery:
             ORDER BY count DESC
             """,
         )
-
         assert result["row_count"] == 3
         assert result["results"][0]["tag"] == "python"
         assert result["results"][0]["count"] == 2
@@ -223,7 +217,6 @@ class TestBatchArrayAdd:
     def test_add_value_to_existing_array(self, temp_base_dir: Path) -> None:
         """Add a value to an existing array property."""
         result = server_module.batch_array_add("*.md", "tags", "new-tag")
-
         assert result["updated_count"] == 2
         assert "a.md" in result["updated_files"]
 
@@ -233,7 +226,6 @@ class TestBatchArrayAdd:
     def test_skip_duplicate_value(self, temp_base_dir: Path) -> None:
         """Skip files where value already exists (allow_duplicates=False)."""
         result = server_module.batch_array_add("*.md", "tags", "python")
-
         # a.md has [python, mcp], b.md has [duckdb]
         # a.md is skipped (python already exists), b.md is updated
         assert result["updated_count"] == 1
@@ -244,7 +236,6 @@ class TestBatchArrayAdd:
         result = server_module.batch_array_add(
             "*.md", "tags", "python", allow_duplicates=True
         )
-
         assert result["updated_count"] == 2
 
         post = frontmatter.load(temp_base_dir / "a.md")
@@ -253,7 +244,6 @@ class TestBatchArrayAdd:
     def test_create_property_if_not_exists(self, temp_base_dir: Path) -> None:
         """Create array property if it doesn't exist."""
         result = server_module.batch_array_add("*.md", "categories", "blog")
-
         assert result["updated_count"] == 2
 
         post = frontmatter.load(temp_base_dir / "a.md")
@@ -262,7 +252,6 @@ class TestBatchArrayAdd:
     def test_skip_non_array_property(self, temp_base_dir: Path) -> None:
         """Skip and warn when property is not an array."""
         result = server_module.batch_array_add("*.md", "date", "value")
-
         assert result["updated_count"] == 0
         assert "warnings" in result
         assert len(result["warnings"]) == 2
@@ -270,7 +259,6 @@ class TestBatchArrayAdd:
     def test_value_as_array_not_flattened(self, temp_base_dir: Path) -> None:
         """Array value should be added as single element, not flattened."""
         result = server_module.batch_array_add("*.md", "tags", ["nested", "array"])
-
         assert result["updated_count"] == 2
 
         post = frontmatter.load(temp_base_dir / "a.md")
@@ -283,7 +271,6 @@ class TestBatchArrayRemove:
     def test_remove_value_from_array(self, temp_base_dir: Path) -> None:
         """Remove a value from array property."""
         result = server_module.batch_array_remove("**/*.md", "tags", "python")
-
         # a.md and c.md have python tag
         assert result["updated_count"] == 2
 
@@ -293,21 +280,18 @@ class TestBatchArrayRemove:
     def test_skip_if_value_not_exists(self, temp_base_dir: Path) -> None:
         """Skip files where value doesn't exist."""
         result = server_module.batch_array_remove("*.md", "tags", "nonexistent")
-
         assert result["updated_count"] == 0
         assert "warnings" not in result
 
     def test_skip_if_property_not_exists(self, temp_base_dir: Path) -> None:
         """Skip files where property doesn't exist."""
         result = server_module.batch_array_remove("*.md", "categories", "value")
-
         assert result["updated_count"] == 0
         assert "warnings" not in result
 
     def test_skip_non_array_property(self, temp_base_dir: Path) -> None:
         """Skip and warn when property is not an array."""
         result = server_module.batch_array_remove("*.md", "date", "value")
-
         assert result["updated_count"] == 0
         assert "warnings" in result
 
@@ -318,7 +302,6 @@ class TestBatchArrayReplace:
     def test_replace_value_in_array(self, temp_base_dir: Path) -> None:
         """Replace a value in array property."""
         result = server_module.batch_array_replace("**/*.md", "tags", "python", "py")
-
         assert result["updated_count"] == 2
 
         post = frontmatter.load(temp_base_dir / "a.md")
@@ -328,21 +311,18 @@ class TestBatchArrayReplace:
     def test_skip_if_old_value_not_exists(self, temp_base_dir: Path) -> None:
         """Skip files where old_value doesn't exist."""
         result = server_module.batch_array_replace("*.md", "tags", "nonexistent", "new")
-
         assert result["updated_count"] == 0
         assert "warnings" not in result
 
     def test_skip_if_property_not_exists(self, temp_base_dir: Path) -> None:
         """Skip files where property doesn't exist."""
         result = server_module.batch_array_replace("*.md", "categories", "old", "new")
-
         assert result["updated_count"] == 0
         assert "warnings" not in result
 
     def test_skip_non_array_property(self, temp_base_dir: Path) -> None:
         """Skip and warn when property is not an array."""
         result = server_module.batch_array_replace("*.md", "date", "old", "new")
-
         assert result["updated_count"] == 0
         assert "warnings" in result
 
@@ -353,7 +333,6 @@ class TestBatchArraySort:
     def test_sort_array_ascending(self, temp_base_dir: Path) -> None:
         """Sort array in ascending order."""
         result = server_module.batch_array_sort("*.md", "tags")
-
         # a.md has [python, mcp] -> [mcp, python] (updated)
         # b.md has [duckdb] (single element, already sorted, skipped)
         assert result["updated_count"] == 1
@@ -365,7 +344,6 @@ class TestBatchArraySort:
     def test_sort_array_descending(self, temp_base_dir: Path) -> None:
         """Sort array in descending order."""
         result = server_module.batch_array_sort("*.md", "tags", reverse=True)
-
         # a.md has [python, mcp] - already descending order (skipped)
         # b.md has [duckdb] (single element, already sorted, skipped)
         assert result["updated_count"] == 0
@@ -376,7 +354,6 @@ class TestBatchArraySort:
         server_module.batch_array_sort("*.md", "tags")
         # Now a.md has [mcp, python], reverse should update it
         result = server_module.batch_array_sort("*.md", "tags", reverse=True)
-
         assert result["updated_count"] == 1
 
         post = frontmatter.load(temp_base_dir / "a.md")
@@ -388,7 +365,6 @@ class TestBatchArraySort:
         server_module.batch_array_sort("*.md", "tags")
         # Second sort should skip
         result = server_module.batch_array_sort("*.md", "tags")
-
         assert result["updated_count"] == 0
 
     def test_skip_empty_array(self, temp_base_dir: Path) -> None:
@@ -396,19 +372,16 @@ class TestBatchArraySort:
         (temp_base_dir / "empty.md").write_text("---\ntags: []\n---\n# Empty")
 
         result = server_module.batch_array_sort("empty.md", "tags")
-
         assert result["updated_count"] == 0
 
     def test_skip_if_property_not_exists(self, temp_base_dir: Path) -> None:
         """Skip files where property doesn't exist."""
         result = server_module.batch_array_sort("*.md", "categories")
-
         assert result["updated_count"] == 0
         assert "warnings" not in result
 
     def test_skip_non_array_property(self, temp_base_dir: Path) -> None:
         """Skip and warn when property is not an array."""
         result = server_module.batch_array_sort("*.md", "date")
-
         assert result["updated_count"] == 0
         assert "warnings" in result
