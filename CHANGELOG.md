@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.1](https://github.com/kzmshx/frontmatter-mcp/compare/v0.2.0...v0.2.1) (2025-11-29)
+
+
+### Documentation
+
+* update README with uvx configuration ([#12](https://github.com/kzmshx/frontmatter-mcp/issues/12)) ([3aa60d4](https://github.com/kzmshx/frontmatter-mcp/commit/3aa60d4d47ff9bb85181fb04b15f5dfefbb92020))
+
 ## [0.2.0](https://github.com/kzmshx/frontmatter-mcp/compare/v0.1.0...v0.2.0) (2025-11-29)
 
 
