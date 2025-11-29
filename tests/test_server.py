@@ -154,3 +154,60 @@ class TestUpdate:
         """Error when path is outside base_dir."""
         with pytest.raises(ValueError):
             server_module.update("../outside.md", set={"x": 1})
+
+
+class TestBatchUpdate:
+    """Tests for batch_update tool."""
+
+    def test_set_property_all_files(self, temp_base_dir: Path) -> None:
+        """Set a property on all matching files."""
+        result = server_module.batch_update("*.md", set={"status": "reviewed"})
+
+        assert result["updated_count"] == 2
+        assert "a.md" in result["updated_files"]
+        assert "b.md" in result["updated_files"]
+
+        # Verify files were actually updated
+        import frontmatter
+
+        post = frontmatter.load(temp_base_dir / "a.md")
+        assert post["status"] == "reviewed"
+
+    def test_recursive_glob(self, temp_base_dir: Path) -> None:
+        """Update all files including subdirectories."""
+        result = server_module.batch_update("**/*.md", set={"batch": True})
+
+        assert result["updated_count"] == 3
+        assert "subdir/c.md" in result["updated_files"]
+
+    def test_unset_property(self, temp_base_dir: Path) -> None:
+        """Unset a property from all matching files."""
+        result = server_module.batch_update("**/*.md", unset=["tags"])
+
+        assert result["updated_count"] == 3
+
+        import frontmatter
+
+        post = frontmatter.load(temp_base_dir / "a.md")
+        assert "tags" not in post.keys()
+
+    def test_set_and_unset(self, temp_base_dir: Path) -> None:
+        """Set and unset properties in batch."""
+        result = server_module.batch_update(
+            "**/*.md", set={"new_prop": "value"}, unset=["date"]
+        )
+
+        assert result["updated_count"] == 3
+
+        import frontmatter
+
+        post = frontmatter.load(temp_base_dir / "b.md")
+        assert post["new_prop"] == "value"
+        assert "date" not in post.keys()
+
+    def test_no_matching_files(self, temp_base_dir: Path) -> None:
+        """Handle no matching files gracefully."""
+        result = server_module.batch_update("*.txt", set={"x": 1})
+
+        assert result["updated_count"] == 0
+        assert result["updated_files"] == []
