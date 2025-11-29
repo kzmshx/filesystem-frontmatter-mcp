@@ -211,3 +211,25 @@ class TestBatchUpdate:
 
         assert result["updated_count"] == 0
         assert result["updated_files"] == []
+
+    def test_no_warnings_key_when_success(self, temp_base_dir: Path) -> None:
+        """Warnings key is absent when all updates succeed."""
+        result = server_module.batch_update("*.md", set={"status": "ok"})
+
+        assert result["updated_count"] == 2
+        assert "warnings" not in result
+
+    def test_warnings_on_malformed_frontmatter(self, temp_base_dir: Path) -> None:
+        """Warnings are populated when file has malformed frontmatter."""
+        # Create a file with malformed YAML frontmatter
+        (temp_base_dir / "malformed.md").write_text(
+            "---\ninvalid: [unclosed\n---\n# Content"
+        )
+
+        result = server_module.batch_update("*.md", set={"status": "ok"})
+
+        # a.md and b.md should succeed, malformed.md should fail
+        assert result["updated_count"] == 2
+        assert "warnings" in result
+        assert len(result["warnings"]) == 1
+        assert "malformed.md" in result["warnings"][0]
