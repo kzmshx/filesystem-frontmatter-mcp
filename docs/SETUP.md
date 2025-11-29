@@ -20,12 +20,12 @@ claude mcp add serena -s local -- uvx --from git+https://github.com/oraios/seren
 
 ## コマンド一覧
 
-| コマンド | 説明 |
-|---------|------|
-| `make lint` | リンター実行 |
-| `make fix` | リント問題を自動修正 |
-| `make test` | テスト実行 |
-| `make help` | コマンド一覧表示 |
+| コマンド    | 説明                 |
+| ----------- | -------------------- |
+| `make lint` | リンター実行         |
+| `make fix`  | リント問題を自動修正 |
+| `make test` | テスト実行           |
+| `make help` | コマンド一覧表示     |
 
 ## MCP サーバーの実行
 
